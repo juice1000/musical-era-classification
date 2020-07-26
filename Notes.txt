@@ -1,0 +1,31 @@
+
+
+NN implementation with Keras, year prediction with MSD Dataset that has years listed
+________________________________________________________________________
+
+Extract music info:
+Echo Nest API
+
+-> Reference to MSD proj on western songs
+There are 90 attributes
+TimbreAverage[1-12]
+TimbreCovariance[1-78]
+
+-> Recs:
+train: first 463,715 examples
+test: last 51,630 examples
+
+NN implementation seen on: https://github.com/AumitLeon/million-songs/wiki/Year-Prediction-Experiments#mini-deep-net-10-hidden-layers
+
+Mini Deep Net: 10 Hidden Layers
+Hidden Layers: 10
+Hidden units: 100 for each of the 5 hidden units
+Activation Function = Relu For hidden layers, softmax for output layer
+Regularization = 0.00001 (Same for all hidden layers)
+Training: 10000 examples
+Validation split: 0.1
+Epochs: 200
+batch_size: 32
+feature scaling: Yes
+Optimizer: SGD
+Performance: 9.2% accuracy on validation set.
