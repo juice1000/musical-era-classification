@@ -35,7 +35,7 @@ def CNN_model():
     model.add(Dense(units=100, activation='relu'))
     # model.add(Flatten())
 
-    # Output is 0-2011, after conversion to categorical vars
+    # Output is 0-8 for each decade
     model.add(Dense(units=9, activation='softmax'))
 
     # Tune the optimizer
@@ -133,7 +133,7 @@ def main(filename, test):
         # fix random seed for reproducibility
         seed = 7
         np.random.seed(seed)
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+        kfold = StratifiedKFold(n_splits=20, shuffle=True, random_state=seed)
         fold_var = 1
 
 
@@ -175,32 +175,33 @@ def main(filename, test):
     else:
         model.load_weights(save_dir + "/model_" + ".h5")
         y_test = keras.utils.to_categorical(Y, num_classes=9)
-        #predictions = []
-        scores = []
 
-        #scores = model.evaluate(X, y_test, verbose=0)
         predictions = model.predict(X)
+        predictions = np.array(predictions)
+        predictions = np.around(predictions)
+
+        #print(predictions)
+        total = len(y_test)
+        count = 0
 
 
-        #print("%s: %.2f%%, loss:" % (model.metrics_names[1], scores[1] * 100), scores[0])
-        total = len(X)
-        for i in range(len(X)):
-            print("X=%s, Predicted=%s" % (predictions[i], y_test[i]))
-            if X[i] == y_test[i]:
-                scores.append(1)
+        for i in range(len(predictions)):
+            #print("X=%s, Predicted=%s" % (predictions[i], y_test[i]))
+            if np.all(predictions[i] == y_test[i]):
+                count += 1
 
-        print(predictions)
-        accuracy = (total / len(scores))*100
-        print("\n\nMODEL ACCURACY: ", accuracy, "%")
+        accuracy = (count/total) * 100
+        print("\n\nMODEL ACCURACY - TEST: ", round(accuracy, 2), "%")
+
 
 
 if __name__ == "__main__":
 
     print("\n INITIALIZE TRAINING")
-    main(filename="data_library/MSDB_5000.csv", test=False)
+    main(filename="data_library/MSDB_10000.csv", test=False)
 
     plt.show()
 
     print("\n INITIALIZE TESTING")
-    main(filename="data_library/MSDB_5000_testset.csv", test=True)
+    main(filename="data_library/MSDB_10000_testset.csv", test=True)
 
