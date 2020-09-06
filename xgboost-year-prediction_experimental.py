@@ -78,8 +78,10 @@ def main(filename, test):
 
         # encode string class values as integers
 
-        n_estimators = [50, 100, 150, 200]
-        max_depth = [2, 4, 6, 8]
+        # Out of 50, 100, 150, 200 the best is 150
+        n_estimators = [300]
+        # Out of 2, 4, 6, 8 the best is 2
+        max_depth = [8]
 
         param_grid = dict(max_depth=max_depth, n_estimators=n_estimators)
         kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
@@ -94,26 +96,17 @@ def main(filename, test):
         means = grid_result.cv_results_['mean_test_score']
         stds = grid_result.cv_results_['std_test_score']
         params = grid_result.cv_results_['params']
+
         for mean, stdev, param in zip(means, stds, params):
             print("%f (%f) with: %r" % (mean, stdev, param))
 
-        # plot
-        scores = np.array(means).reshape(len(max_depth), len(n_estimators))
-        for i, value in enumerate(max_depth):
-            plt.plot(n_estimators, scores[i], label='depth: ' + str(value))
-
-
-        plt.errorbar(n_estimators, means, yerr=stds)
-        plt.title("XGBoost n_estimators vs Log Loss")
-        plt.xlabel('n_estimators')
-        plt.ylabel('Log Loss')
-        plt.savefig('plots/n_estimators.png')
-
+        
         # Recap with best model
-        model = XGBClassifier()
-        GridSearchCV(model, best_params, scoring="neg_log_loss", n_jobs=-1, cv=kfold, verbose=1)
-        model = grid_search.fit(X, label_encoded_y)
-        pickle.dump(model, open("saved_models/XGB.pickle.dat", 'wb'))
+        #model = XGBClassifier()
+        #print(best_params)
+        #grid_search = GridSearchCV(model, best_params, scoring="neg_log_loss", n_jobs=-1, cv=kfold, verbose=1)
+        #model = grid_search.fit(X, label_encoded_y)
+        pickle.dump(grid_result, open("saved_models/XGB.pickle.dat", 'wb'))
 
 
     else:
@@ -137,7 +130,6 @@ def main(filename, test):
 if __name__ == "__main__":
 
     main(filename="data_library/MSD_unbiased_300.csv", test=False)
-    plt.show()
     print("\n INITIALIZE TESTING")
-    main(filename="data_library/MSDB_5000_testset.csv", test=True)
+    main(filename="data_library/MSDB_100000_testset.csv", test=True)
 
