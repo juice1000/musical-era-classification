@@ -17,7 +17,7 @@ for i in range(1,90):
     column_names.append(str(i))
 
 
-df = pd.read_csv("data_library/MSDB_100000.csv", header=None)
+df = pd.read_csv("data_library/MSD_unbiased.csv", header=None)
 df.columns = column_names
 
 twen = df.loc[df['Year'] < 1930]
@@ -32,9 +32,17 @@ thou = df.loc[df['Year'] >= 2000]
 
 print(len(twen), len(third), len(four), len(fif), len(six), len(seven), len(eigt), len(ninet), len(thou))
 
-eigt = eigt[0:5000]
-ninet = ninet[0:5000]
-thou = thou[0:5000]
+
+four = four[0:300]
+fif = fif[0:300]
+six = six[0:3000]
+seven = seven[0:300]
+eigt = eigt[0:300]
+ninet = ninet[0:300]
+thou = thou[0:300]
+
+print(len(twen), len(third), len(four), len(fif), len(six), len(seven), len(eigt), len(ninet), len(thou))
+
 
 newDF = pd.concat([twen, third, four, fif, six, seven, eigt, ninet, thou], axis=0, ignore_index=True)
 newDF = newDF.sample(frac=1)
@@ -45,7 +53,7 @@ newDF = newDF.sample(frac=1)
 #training_examples = pd.DataFrame(training_examples)
 #training_examples = training_examples.drop(axis=1, columns=90)
 #print(training_examples.head())
-newDF.to_csv('data_library/MSD100000_unbiased.csv', index=False, header=False)
+newDF.to_csv('data_library/MSD_unbiased_300.csv', index=False, header=False)
 
 
 #labels = np.array(training_labels)

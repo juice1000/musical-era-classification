@@ -12,7 +12,7 @@ examples = []
 print("GETTING DATASET")
 
 # Replace filename with the path to the CSV where you have the year predictions data saved.
-filename = "data_library/YearPredictionMSD.txt"
+filename = "YearPredictionMSD.txt"
 with open(filename, 'r') as f:
     for line in f:
         content = line.split(",")
@@ -29,14 +29,48 @@ with open(filename, 'r') as f:
 
         examples.append(content)
 
-training_examples = examples[5000:7000]
-training_labels = labels[5000:7000]
+training_examples = examples
+training_labels = labels
+
+
+twen = 0
+third = 0
+four = 0
+fif = 0
+six = 0
+seven = 0
+eigt = 0
+ninet = 0
+thou = 0
+
+for x in range(len(training_labels)):
+    if int(training_labels[x]) < 1930:
+        twen += 1
+    elif int(training_labels[x]) < 1940 and int(training_labels[x]) >= 1930:
+        third += 1
+    elif int(training_labels[x]) < 1950 and int(training_labels[x]) >= 1940:
+        four += 1
+    elif int(training_labels[x]) < 1960 and int(training_labels[x]) >= 1950:
+        fif += 1
+    elif int(training_labels[x]) < 1970 and int(training_labels[x]) >= 1960:
+        six += 1
+    elif int(training_labels[x]) < 1980 and int(training_labels[x]) >= 1970:
+        seven += 1
+    elif int(training_labels[x]) < 1990 and int(training_labels[x]) >= 1930:
+        eigt += 1
+    elif int(training_labels[x]) < 2000 and int(training_labels[x]) >= 1930:
+        ninet += 1
+    else:
+        thou += 1
+
+
+print(twen, third, four, fif, six, seven, eigt, ninet, thou)
 
 # Create new subdata
 training_examples = pd.DataFrame(training_examples)
 training_examples = training_examples.drop(axis=1, columns=90)
 print(training_examples.head())
-training_examples.to_csv('data_library/MSDB_5000_testset.csv', index=False, header=False)
+training_examples.to_csv('data_library/MSDB_YearPred.csv', index=False, header=False)
 
 # intilize a null list 
 unique = [] 
@@ -58,10 +92,10 @@ total_labels = np.array(labels)
 
 
 
-labels = np.array(training_labels)
+#labels = np.array(training_labels)
 
 # Scale the features so they have 0 mean
-total_scaled = preprocessing.scale(training_examples)
+#total_scaled = preprocessing.scale(training_examples)
 
 
 
