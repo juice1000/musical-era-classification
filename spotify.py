@@ -60,12 +60,10 @@ if token:
                     download_url = dict_iterator(dicts, song_title)
                     break
 
-            if os.path.exists("music_library"):
-                path = "music_library/" + file_title + ".mp3"
-            else:
+            if not os.path.exists("music_library"):
                 os.mkdir("music_library")
-                path = "music_library/" + file_title + ".mp3"
 
+            path = "music_library/" + file_title + ".wav"
 
             if download_url != "":
                 subprocess.call(["curl", download_url, "-H", auth, "--output", path])

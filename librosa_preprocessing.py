@@ -2,24 +2,23 @@ import librosa
 import os, os.path
 import pandas as pd
 
-
 DIR = 'music_library'
 # simple version for working with CWD
 files = [name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]
-
+print(len(files))
 # Append features to dataframe
 df = pd.read_csv("data_library/list_downloaded_previews.csv")
-
+df = df.values
 
 for i in range(len(df)):
 
-    filename = df[i][2] + " -- " + df[i][3] + ".mp3"
-    print("FILENAME: ", filename)
+    filename = df[i][2] + " -- " + df[i][3] + ".wav"
     if os.path.isfile(os.path.join(DIR, filename)):
-        print(df[i][2] + " -- " + df[i][3] + ".mp3")
 
-        audio_path = DIR + "/" + df[i][2] + " -- " + df[i][3] + ".mp3"
-        y , sr = librosa.load(audio_path)
+        audio_path = "./" + DIR + "/" + filename
+
+        print(filename)
+        y , sr = librosa.load(os.fspath(audio_path))
         #print(type(x), type(sr))
 
         # Get all librosa features
