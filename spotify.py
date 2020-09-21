@@ -21,10 +21,6 @@ def url_check(d):
             return preview_url
 
 
-# Load data
-data = pd.read_csv("data_library/MSD_Artists_300.csv")
-
-
 # Search for name
 scope = 'user-library-read'
 username = 'Julien Look'
@@ -41,6 +37,8 @@ if token:
     auth = "Authorization: Bearer %s" % token
 
     df = pd.read_csv("data_library/url_data.csv")
+    df_arr = df.values
+    checkout = []
     df = df.values
 
     counter = 0
@@ -71,6 +69,8 @@ if token:
 
             if download_url != "":
                 subprocess.call(["curl", download_url, "-H", auth, "--output", path])
+                checkout.append(df_arr[i])
+
             else:
                 "DOWNLOAD URL COULD NOT BE FETCHED"
 
@@ -80,5 +80,9 @@ if token:
             print("ERROR RETRIEVING URL...")
             time.sleep(1)
 
+    checkout = pd.DataFrame(checkout)
+    checkout.to_csv('data_library/list_downloaded_previews.csv', index=False, header=False)
+
 else:
     print("Can't get token for", username)
+

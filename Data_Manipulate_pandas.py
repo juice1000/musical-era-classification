@@ -13,12 +13,14 @@ print("GETTING DATASET")
 
 column_names = ["Year"]
 
-for i in range(1,90):
+for i in range(1, 4):
     column_names.append(str(i))
 
 
-df = pd.read_csv("data_library/MSD_unbiased.csv", header=None)
+
+df = pd.read_csv("data_library/MSDB_Artists.csv", header=None)
 df.columns = column_names
+print(df.head())
 
 twen = df.loc[df['Year'] < 1930]
 third = df.loc[(df['Year'] >= 1930) & (df['Year'] < 1940)]
@@ -35,7 +37,7 @@ print(len(twen), len(third), len(four), len(fif), len(six), len(seven), len(eigt
 
 four = four[0:300]
 fif = fif[0:300]
-six = six[0:3000]
+six = six[0:300]
 seven = seven[0:300]
 eigt = eigt[0:300]
 ninet = ninet[0:300]
@@ -53,7 +55,7 @@ newDF = newDF.sample(frac=1)
 #training_examples = pd.DataFrame(training_examples)
 #training_examples = training_examples.drop(axis=1, columns=90)
 #print(training_examples.head())
-newDF.to_csv('data_library/MSD_unbiased_300.csv', index=False, header=False)
+newDF.to_csv('data_library/MSD_Artists_300.csv', index=False, header=False)
 
 
 #labels = np.array(training_labels)
