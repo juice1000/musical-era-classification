@@ -18,6 +18,7 @@ from keras.utils import np_utils, generic_utils
 from sklearn.model_selection import StratifiedKFold
 import os
 import time
+import pandas as pd
 
 opt = keras.optimizers.Adam(lr=0.001)
 
@@ -31,13 +32,13 @@ def CNN_model():
     model = Sequential()
 
     # Our examples of 90 features, so input_dim = 90
-    model.add(Dense(units=200, activation='relu', input_dim=89))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(5)))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(5)))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(5)))
+    model.add(Dense(units=200, activation='relu', input_dim=16))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
     # model.add(Flatten())
 
     # Output is 0-8 for each decade
@@ -57,7 +58,7 @@ def CNN_TEST_model():
     model = Sequential()
 
     # Our examples of 90 features, so input_dim = 90
-    model.add(Dense(units=200, activation='relu', input_dim=89))
+    model.add(Dense(units=200, activation='relu', input_dim=16))
     model.add(Dense(units=300, activation='relu'))
     model.add(Dense(units=300, activation='relu'))
     model.add(Dense(units=300, activation='relu'))
@@ -78,43 +79,21 @@ def main(filename, test):
     labels = []
     examples = []
     print("GETTING DATASET")
-    with open(filename, 'r') as f:
-        for line in f:
-            content = line.split(",")
 
-            labels.append(content[0])
-            content.pop(0)
-
-            # If we wanted pure lists, and convert from string to float
-            # content = [float(elem) for elem in content]
-            # content = map(float, content)
-
-            # If we want a list of numpy arrays, not necessary
-            # npa = np.asarray(content, dtype=np.float64)
-
-            examples.append(content)
-
+    data = pd.read_csv(filename, delimiter=",")
+    data = data.drop(columns="Unnamed: 0")
+    print(data.head())
     print("SPLITTING TRAINING AND VALIDATION SETS")
-    # intilize a null list
-    unique = []
-    # traverse for all elements
 
+    dataset = data.values
 
-    #for x in range(len(labels)):
-        # check if exists in unique_list or not
-    #   if labels[x] not in unique:
-    #       unique.append(labels[x])
-    # for x in range(len(unique)):
-    #    print(unique[x])
-    # print("\n",len(unique))
+    if test is False:
+        training_examples = dataset[:800, 1:]
+        training_labels = dataset[:800, 0]
+    else:
+        training_examples = dataset[800:, 1:]
+        training_labels = dataset[800:, 0]
 
-
-    # Turning lists into numpy arrays
-    training_examples = np.array(examples)
-    training_labels = np.array(labels)
-
-    #print(training_labels)
-    #print(training_examples)
 
     training_examples = preprocessing.scale(training_examples)
 
@@ -201,6 +180,7 @@ def main(filename, test):
 
 
     else:
+
         model = CNN_TEST_model()
         model.load_weights(save_dir + "/model_" + ".h5")
         y_test = keras.utils.to_categorical(Y, num_classes=9)
@@ -231,11 +211,12 @@ def main(filename, test):
 
 if __name__ == "__main__":
 
+
     print("\n INITIALIZE TRAINING")
-    main(filename="data_library/MSD100000_unbiased.csv", test=False)
+    main(filename="data_library/librosa_audiofeatures.csv", test=False)
 
     plt.show()
 
     print("\n INITIALIZE TESTING")
-    main(filename="data_library/MSDB_5000_testset.csv", test=True)
+    main(filename="data_library/librosa_audiofeatures_149999.csv", test=True)
 

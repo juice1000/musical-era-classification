@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.layers import Dropout
+from keras.constraints import maxnorm
 from keras.layers import Flatten
 import numpy as np
 from sklearn import preprocessing
@@ -29,10 +31,15 @@ def CNN_model():
     model = Sequential()
 
     # Our examples of 90 features, so input_dim = 90
-    model.add(Dense(units=100, activation='relu', input_dim=89))
-    model.add(Dense(units=100, activation='relu', kernel_regularizer=regularizers.l2(0.00001)))
-    model.add(Dense(units=100, activation='relu', kernel_regularizer=regularizers.l2(0.00001)))
-    model.add(Dense(units=100, activation='relu'))
+    model.add(Dense(units=200, activation='relu', input_dim=89))
+    model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
+    model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
+    model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
+    model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
     # model.add(Flatten())
 
     # Output is 0-8 for each decade
@@ -46,6 +53,29 @@ def CNN_model():
 
     return model
 
+
+def CNN_TEST_model():
+    # Defining the sequential model
+    model = Sequential()
+
+    # Our examples of 90 features, so input_dim = 90
+    model.add(Dense(units=200, activation='relu', input_dim=89))
+    model.add(Dense(units=300, activation='relu'))
+    model.add(Dense(units=300, activation='relu'))
+    model.add(Dense(units=300, activation='relu'))
+    model.add(Dense(units=300, activation='relu'))
+    # model.add(Flatten())
+
+    # Output is 0-8 for each decade
+    model.add(Dense(units=9, activation='softmax'))
+
+    # Tune the optimizer
+    # sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
+    return model
 
 def main(filename, test):
     labels = []
@@ -133,18 +163,20 @@ def main(filename, test):
         # fix random seed for reproducibility
         seed = 7
         np.random.seed(seed)
-        kfold = StratifiedKFold(n_splits=20, shuffle=True, random_state=seed)
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
         fold_var = 1
 
 
         for train, test in kfold.split(X, Y):
 
             # Convert to categorical in order to produce proper output
+            print(Y[train])
             y_train = keras.utils.to_categorical(Y[train], num_classes=9)
+            print(y_train)
             y_test = keras.utils.to_categorical(Y[test], num_classes=9)
 
             # COMPILE MODEL
-            model.fit(X[train], y_train, epochs=20, callbacks=callbacks, verbose=0)
+            model.fit(X[train], y_train, epochs=10, callbacks=callbacks, verbose=0)
             # evaluate model
             scores = model.evaluate(X[test], y_test, verbose=0)
             print("%s: %.2f%%, loss:" % (model.metrics_names[1], scores[1] * 100), scores[0])
@@ -164,15 +196,17 @@ def main(filename, test):
         plt.plot(cvscores)
         plt.title('model accuracy')
         plt.ylabel('accuracy')
-        # print (history.history.keys())
+        plt.title("Training -- Accuracy")
 
         plt.figure(2)
         plt.plot(cvloss)
         plt.title("Loss")
         plt.ylabel("Loss")
+        plt.title("Training -- Loss")
 
 
     else:
+        model = CNN_TEST_model()
         model.load_weights(save_dir + "/model_" + ".h5")
         y_test = keras.utils.to_categorical(Y, num_classes=9)
 
@@ -180,7 +214,7 @@ def main(filename, test):
         predictions = np.array(predictions)
         predictions = np.around(predictions)
 
-        #print(predictions)
+        print(predictions)
         total = len(y_test)
         count = 0
 
@@ -194,14 +228,19 @@ def main(filename, test):
         print("\n\nMODEL ACCURACY - TEST: ", round(accuracy, 2), "%")
 
 
+        scores = model.evaluate(X, y_test, verbose=0)
+        print("EVALUATION - %s: %.2f%%, loss:" % (model.metrics_names[1], scores[1] * 100), scores[0])
+        cvscores.append(scores[1] * 100)
+        cvloss.append(scores[0])
+
 
 if __name__ == "__main__":
 
     print("\n INITIALIZE TRAINING")
-    main(filename="data_library/MSDB_10000.csv", test=False)
+    main(filename="data_library/MSD_unbiased.csv", test=False)
 
     plt.show()
 
     print("\n INITIALIZE TESTING")
-    main(filename="data_library/MSDB_10000_testset.csv", test=True)
+    main(filename="data_library/MSDB_5000_testset.csv", test=True)
 
