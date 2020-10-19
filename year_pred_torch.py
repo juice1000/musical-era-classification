@@ -301,11 +301,11 @@ if __name__ == "__main__":
                 print('TEST LOSS: ', final_loss)
 
                 scores.append(accuracy)
-                scores.append(test_loss)
+                scores.append(final_loss)
 
             df.loc["{} Hidden".format(length - 1), str(width)] = scores
 
-    df.to_csv("NN_eval/NN_eval_librosa_audiofeatures.csv")
+    df.to_csv("NN_eval/NN_eval_librosa_audiofeatures_torch.csv")
 
 
 
