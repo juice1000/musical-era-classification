@@ -6,9 +6,8 @@
 # key_confidence, mode, mode_confidence, start_of_fade_out, 
 # time_signature,time_signature_conf, track_id
 
-import hdf5_getters
+from CODE._random import hdf5_getters
 import os
-import csv
 import string
 
 # Debugging

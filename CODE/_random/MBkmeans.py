@@ -2,11 +2,9 @@
 # Uses sci-kit MiniBatchKMeans library to cluster tracks
 # by their lyrics which come in in bag-of-words format.
 
-import hdf5_getters
+from CODE._random import hdf5_getters
 import os
-import csv
-import string
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans
 import numpy as np 
 
 # Provide the starting root dir 

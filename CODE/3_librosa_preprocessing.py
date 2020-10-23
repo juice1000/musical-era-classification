@@ -1,7 +1,6 @@
 import librosa
-import os, os.path
+import os.path
 import pandas as pd
-import statistics
 import numpy as np
 
 def normalize(item):
@@ -13,21 +12,23 @@ def normalize(item):
     return item_normalized
 
 
-def create_col_names(item):
+def create_col_names(item, name):
     
     names = []
     for i in range(len(item[0])):
-        names.append("mfcc_" + str(i+1))
+        names.append(name + str(i+1))
 
     return names
 
 
-DIR = 'music_library'
+DIR = '../music_library'
 # simple version for working with CWD
 files = [name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]
 print(len(files))
 # Append features to dataframe
-df = pd.read_csv("data_library/list_downloaded_previews.csv")
+df = pd.read_csv("../data_library/preprocessing_data/url_data_2000s.csv")
+df.columns=["Year", "ID", "Artist", "Title", "URL"]
+
 df2 = df.values
 
 chroma_stft_arr = []
@@ -44,7 +45,7 @@ for i in range(len(df2)):
 
         audio_path = "./" + DIR + "/" + filename
 
-        print(filename)
+        print(i, filename)
         y , sr = librosa.load(os.fspath(audio_path))
 
         # Get all librosa features
@@ -71,10 +72,10 @@ for i in range(len(df2)):
 
 
 # Create Dataframes from audio features
-mfcc_names = create_col_names(mfcc_arr)
+mfcc_names = create_col_names(mfcc_arr, "mfcc_")
 mfcc = pd.DataFrame(mfcc_arr, columns=mfcc_names)
 
-chroma_names = create_col_names(chroma_stft_arr)
+chroma_names = create_col_names(chroma_stft_arr, "chroma_stft_")
 chroma_stft = pd.DataFrame(chroma_stft_arr, columns=chroma_names)
 
 spec_cent = pd.DataFrame(np.array(spec_cent_arr), columns=["spec_cent"])
@@ -82,9 +83,9 @@ spec_bw = pd.DataFrame(np.array(spec_bw_arr), columns=["spec_bw"])
 rolloff = pd.DataFrame(np.array(rolloff_arr), columns=["rolloff"])
 zcr = pd.DataFrame(np.array(zcr_arr), columns=["zcr"])
 
+
 # Concatenate Dataframes
 df = pd.concat([df, mfcc, chroma_stft, spec_cent, spec_bw, rolloff, zcr], axis=1)
 print(df.head())
-df.to_csv("data_library/librosa_audiofeatures.csv")
-
-
+df_name = "data_library/librosa_audiofeatures_2000s.csv"
+df.to_csv(df_name)

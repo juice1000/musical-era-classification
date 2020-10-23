@@ -5,21 +5,22 @@
 import matplotlib
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.constraints import maxnorm
-from keras.layers import Flatten
+from CODE.models import year_pred_keras
+from CODE.models.year_pred_keras import Sequential
+from CODE.models.year_pred_keras import Dense
+from CODE.models.year_pred_keras import Dropout
+from CODE.models.year_pred_keras import maxnorm
+from CODE.models.year_pred_keras import Flatten
 import numpy as np
 from sklearn import preprocessing
-from keras import regularizers
-from keras.utils import np_utils, generic_utils
+from CODE.models.year_pred_keras import regularizers
+from CODE.models.year_pred_keras import np_utils, generic_utils
 from sklearn.model_selection import StratifiedKFold
 import os
 import time
+import pandas as pd
 
-opt = keras.optimizers.Adam(lr=0.001)
+opt = year_pred_keras.optimizers.Adam(lr=0.001)
 
 # Auxillary Function for getting model name througout validation
 def get_model_name():
@@ -31,15 +32,13 @@ def CNN_model():
     model = Sequential()
 
     # Our examples of 90 features, so input_dim = 90
-    model.add(Dense(units=200, activation='relu', input_dim=89))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
-    model.add(Dropout(0.1))
-    model.add(Dense(units=300, activation='relu', kernel_constraint=maxnorm(1)))
+    model.add(Dense(units=200, activation='relu', input_dim=16))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
+    #model.add(Dropout(0.1))
+    model.add(Dense(units=300, activation='relu'))
     # model.add(Flatten())
 
     # Output is 0-8 for each decade
@@ -59,8 +58,7 @@ def CNN_TEST_model():
     model = Sequential()
 
     # Our examples of 90 features, so input_dim = 90
-    model.add(Dense(units=200, activation='relu', input_dim=89))
-    model.add(Dense(units=300, activation='relu'))
+    model.add(Dense(units=200, activation='relu', input_dim=16))
     model.add(Dense(units=300, activation='relu'))
     model.add(Dense(units=300, activation='relu'))
     model.add(Dense(units=300, activation='relu'))
@@ -81,43 +79,21 @@ def main(filename, test):
     labels = []
     examples = []
     print("GETTING DATASET")
-    with open(filename, 'r') as f:
-        for line in f:
-            content = line.split(",")
 
-            labels.append(content[0])
-            content.pop(0)
-
-            # If we wanted pure lists, and convert from string to float
-            # content = [float(elem) for elem in content]
-            # content = map(float, content)
-
-            # If we want a list of numpy arrays, not necessary
-            # npa = np.asarray(content, dtype=np.float64)
-
-            examples.append(content)
-
+    data = pd.read_csv(filename, delimiter=",")
+    data = data.drop(columns="Unnamed: 0")
+    print(data.head())
     print("SPLITTING TRAINING AND VALIDATION SETS")
-    # intilize a null list
-    unique = []
-    # traverse for all elements
 
+    dataset = data.values
 
-    #for x in range(len(labels)):
-        # check if exists in unique_list or not
-    #   if labels[x] not in unique:
-    #       unique.append(labels[x])
-    # for x in range(len(unique)):
-    #    print(unique[x])
-    # print("\n",len(unique))
+    if test is False:
+        training_examples = dataset[:800, 1:]
+        training_labels = dataset[:800, 0]
+    else:
+        training_examples = dataset[800:, 1:]
+        training_labels = dataset[800:, 0]
 
-
-    # Turning lists into numpy arrays
-    training_examples = np.array(examples)
-    training_labels = np.array(labels)
-
-    #print(training_labels)
-    #print(training_examples)
 
     training_examples = preprocessing.scale(training_examples)
 
@@ -146,7 +122,7 @@ def main(filename, test):
     cvscores = []
     cvloss = []
 
-    save_dir = 'saved_models'
+    save_dir = '../../saved_models'
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
 
@@ -156,24 +132,22 @@ def main(filename, test):
 
     # CREATE NEW MODEL
     model = CNN_model()
-    checkpoint = keras.callbacks.ModelCheckpoint(get_model_name(), monitor='acc', save_best_only=True, verbose=0, mode='max')
+    checkpoint = year_pred_keras.callbacks.ModelCheckpoint(get_model_name(), monitor='acc', save_best_only=True, verbose=0, mode='max')
     callbacks = [checkpoint]
 
     if test is False:
         # fix random seed for reproducibility
         seed = 7
         np.random.seed(seed)
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+        kfold = StratifiedKFold(n_splits=20, shuffle=True, random_state=seed)
         fold_var = 1
 
 
         for train, test in kfold.split(X, Y):
 
             # Convert to categorical in order to produce proper output
-            print(Y[train])
-            y_train = keras.utils.to_categorical(Y[train], num_classes=9)
-            print(y_train)
-            y_test = keras.utils.to_categorical(Y[test], num_classes=9)
+            y_train = year_pred_keras.utils.to_categorical(Y[train], num_classes=9)
+            y_test = year_pred_keras.utils.to_categorical(Y[test], num_classes=9)
 
             # COMPILE MODEL
             model.fit(X[train], y_train, epochs=10, callbacks=callbacks, verbose=0)
@@ -206,9 +180,10 @@ def main(filename, test):
 
 
     else:
+
         model = CNN_TEST_model()
         model.load_weights(save_dir + "/model_" + ".h5")
-        y_test = keras.utils.to_categorical(Y, num_classes=9)
+        y_test = year_pred_keras.utils.to_categorical(Y, num_classes=9)
 
         predictions = model.predict(X)
         predictions = np.array(predictions)
@@ -236,11 +211,12 @@ def main(filename, test):
 
 if __name__ == "__main__":
 
+
     print("\n INITIALIZE TRAINING")
-    main(filename="data_library/MSD_unbiased.csv", test=False)
+    main(filename="../../data_library/librosa_audiofeatures.csv", test=False)
 
     plt.show()
 
     print("\n INITIALIZE TESTING")
-    main(filename="data_library/MSDB_5000_testset.csv", test=True)
+    main(filename="../../data_library/Librosa/librosa_audiofeatures_149999.csv", test=True)
 

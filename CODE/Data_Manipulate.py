@@ -12,10 +12,10 @@ examples = []
 print("GETTING DATASET")
 
 # Replace filename with the path to the CSV where you have the year predictions data saved.
-filename = "YearPredictionMSD.txt"
-with open(filename, 'r') as f:
+filename = "data_library/MSD_artists.txt"
+with open(filename, 'r', encoding="utf8") as f:
     for line in f:
-        content = line.split(",")
+        content = line.split("<SEP>")
 
         labels.append(content[0])
         #content.pop(0)
@@ -68,9 +68,9 @@ print(twen, third, four, fif, six, seven, eigt, ninet, thou)
 
 # Create new subdata
 training_examples = pd.DataFrame(training_examples)
-training_examples = training_examples.drop(axis=1, columns=90)
+training_examples[3] = training_examples[3].str.replace(r'\n', '')
 print(training_examples.head())
-training_examples.to_csv('data_library/MSDB_YearPred.csv', index=False, header=False)
+training_examples.to_csv('data_library/MSDB_Artists.csv', index=False, header=False)
 
 # intilize a null list 
 unique = [] 

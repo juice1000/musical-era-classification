@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import torch.multiprocessing as mp
 
 
-save_dir = 'saved_models'
+save_dir = '../../saved_models'
 device = "cpu"
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
@@ -56,11 +56,13 @@ class Net(nn.Module):
         modules = []
         modules.append(nn.Linear(36, self.width))
         modules.append(nn.ReLU())
+        modules.append(nn.BatchNorm1d(num_features=self.width))
         for i in range(self.length):
             modules.append(nn.Linear(self.width, self.width))
             modules.append(nn.ReLU())
+            modules.append(nn.BatchNorm1d(num_features=self.width))
         modules.append(nn.Linear(self.width, 5))
-        modules.append(nn.Softmax(dim=0))
+        #modules.append(nn.Softmax(dim=0))
 
         self.model = nn.Sequential(*modules)
 
@@ -78,10 +80,14 @@ def data_preprocessing(filename):
     data = filename
     dataset = data.values
 
+
     training_examples = dataset[:,1:]
     training_labels = dataset[:, 0]
 
-    training_examples = preprocessing.scale(training_examples)
+    #training_examples = preprocessing.scale(training_examples)
+    scaler = preprocessing.MinMaxScaler()
+    # fit and transform in one step
+    training_examples = scaler.fit_transform(training_examples)
 
     for x in range(len(training_labels)):
         if int(training_labels[x]) < 1930:
@@ -229,7 +235,7 @@ if __name__ == "__main__":
 
     # We test for 100 - 400 nodes
     # With 2-5 hidden layers
-    df = pd.DataFrame(index=["1 Hidden", "2 Hidden", "3 Hidden"], columns=["100", "200", "300", "400", "500"])
+    df = pd.DataFrame(index=["1 Hidden", "2 Hidden", "3 Hidden", "4 Hidden"], columns=["300", "400", "500", "600"])
 
     training_data = "data_library/librosa_audiofeatures_train5feat.csv"
     data = pd.read_csv(training_data)
@@ -238,17 +244,17 @@ if __name__ == "__main__":
     #data = data.replace([np.inf, -np.inf], np.nan).dropna()
 
     # create as many processes as there are CPUs on your machine
-    num_processes = mp.cpu_count()
+    num_processes = mp.cpu_count() - 2
     # calculate the chunk size as an integer
     shard_size = int(data.shape[0] / num_processes)
     # this solution was reworked from the above link.
     # will work even if the length of the dataframe is not evenly divisible by num_processes
     shards = [data.iloc[data.index[i:i + shard_size]] for i in range(0, data.shape[0], shard_size)]
 
-    for i in range(1, 6):
+    for i in range(3, 7):
         width = i * 100
 
-        for length in range(2, 5):
+        for length in range(1, 5):
             gnet = Net(length, width)
             print(gnet)
             criterion = nn.CrossEntropyLoss()
@@ -258,14 +264,20 @@ if __name__ == "__main__":
             global_ep, global_ep_r = mp.Value('i', 0), mp.Value('d', 0.)
 
             workers = [Worker(gnet, opt, global_ep, i, shards[i], criterion, width, length)
-            for i in range(mp.cpu_count())]
+            for i in range(num_processes)]
             [w.start() for w in workers]
 
             [w.join() for w in workers]
 
+            torch.save(gnet.state_dict(), "saved_models/torch.pt")
+
             #######################    TESTING     ########################
 
-            test_data = pd.read_csv("data_library/librosa_audiofeatures_test5feat.csv")
+            gnet = Net(length, width)
+            gnet.load_state_dict(torch.load("saved_models/torch.pt"))
+            gnet.eval()
+
+            test_data = pd.read_csv("../../data_library/librosa_audiofeatures_test5feat.csv")
             if "Unnamed: 0" in test_data.columns:
                 test_data = test_data.drop(columns="Unnamed: 0")
 
@@ -282,7 +294,7 @@ if __name__ == "__main__":
             scores = []
 
             with torch.no_grad():
-                gnet.eval()
+
                 for i, data in enumerate(test_loader, 0):
                     inputs, labels = data
                     labels_ = labels.to(device, dtype=torch.int64)
@@ -295,6 +307,8 @@ if __name__ == "__main__":
                     labelsize += labels.size(0)
                     count += (predicted == labels).sum().item()
 
+                plt.plot(test_loss)
+                plt.show()
                 accuracy = round((100 * count / labelsize), 2)
                 final_loss = round((np.mean(test_loss)),2)
                 print('\n\nTEST ACCURACY: ', accuracy, "%")
@@ -305,7 +319,7 @@ if __name__ == "__main__":
 
             df.loc["{} Hidden".format(length - 1), str(width)] = scores
 
-    df.to_csv("NN_eval/NN_eval_librosa_audiofeatures_torch.csv")
+    df.to_csv("NN_eval/NN_eval_librosa_audiofeatures_torch3.csv")
 
 
 

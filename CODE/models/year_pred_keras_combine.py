@@ -27,7 +27,7 @@ import pandas as pd
 
 tf.debugging.set_log_device_placement(True)
 
-save_dir = 'saved_models'
+save_dir = '../../saved_models'
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 

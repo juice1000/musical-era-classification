@@ -5,16 +5,13 @@
 import matplotlib
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.constraints import maxnorm
-from keras.layers import Flatten
+from CODE.models import year_pred_keras
+from CODE.models.year_pred_keras import Sequential
+from CODE.models.year_pred_keras import Dense
+from CODE.models.year_pred_keras import Dropout
+from CODE.models.year_pred_keras import maxnorm
 import numpy as np
 from sklearn import preprocessing
-from keras import regularizers
-from keras.utils import np_utils, generic_utils
 from sklearn.model_selection import StratifiedKFold
 import os
 import time
@@ -23,7 +20,7 @@ from numpy import loadtxt
 from xgboost import XGBClassifier
 
 
-opt = keras.optimizers.Adam(lr=0.001)
+opt = year_pred_keras.optimizers.Adam(lr=0.001)
 
 # Auxillary Function for getting model name througout validation
 def get_model_name():
@@ -150,7 +147,7 @@ def main(filename, test):
     cvscores = []
     cvloss = []
 
-    save_dir = 'saved_models'
+    save_dir = '../../saved_models'
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
 
@@ -165,7 +162,7 @@ def main(filename, test):
 
     # fit model no training data
     model = XGBClassifier()
-    checkpoint = keras.callbacks.ModelCheckpoint(get_model_name(), monitor='acc', save_best_only=True, verbose=0, mode='max')
+    checkpoint = year_pred_keras.callbacks.ModelCheckpoint(get_model_name(), monitor='acc', save_best_only=True, verbose=0, mode='max')
     callbacks = [checkpoint]
 
     if test is False:
@@ -179,8 +176,8 @@ def main(filename, test):
         for train, test in kfold.split(X, Y):
 
             # Convert to categorical in order to produce proper output
-            y_train = keras.utils.to_categorical(Y[train], num_classes=9)
-            y_test = keras.utils.to_categorical(Y[test], num_classes=9)
+            y_train = year_pred_keras.utils.to_categorical(Y[train], num_classes=9)
+            y_test = year_pred_keras.utils.to_categorical(Y[test], num_classes=9)
 
             # COMPILE MODEL
             model.fit(X[train], y_train)
@@ -215,7 +212,7 @@ def main(filename, test):
     else:
         model = CNN_TEST_model()
         model.load_weights(save_dir + "/model_" + ".h5")
-        y_test = keras.utils.to_categorical(Y, num_classes=9)
+        y_test = year_pred_keras.utils.to_categorical(Y, num_classes=9)
 
         predictions = model.predict(X)
         predictions = np.array(predictions)

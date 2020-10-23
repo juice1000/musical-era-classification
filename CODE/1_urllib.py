@@ -10,7 +10,7 @@ def make_url(art_tracks):
     return url
 
 
-df = pd.read_csv("data_library/MSD_Artists_300.csv", header=None)
+df = pd.read_csv("../data_library/MSDB/MSDB_2000s.csv", header=None)
 df2 = df[df.columns[2:]].apply(lambda x: ' '.join(x.astype(str)), axis=1)
 data = df2.values
 artists_tracks = []
@@ -34,4 +34,4 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):  
     print(df_all.head())
 
 
-df_all.to_csv('data_library/url_data.csv', index=False, header=False)
+df_all.to_csv('data_library/preprocessing_data/url_data_2000s.csv', index=False, header=False)
