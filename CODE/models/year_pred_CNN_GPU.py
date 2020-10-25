@@ -1,12 +1,13 @@
 from keras_preprocessing.image import ImageDataGenerator
-from keras.layers import Dense, Activation, Flatten, Dropout, BatchNormalization
-from keras.models import Sequential, Model
-from keras.layers import Conv2D, MaxPooling2D
-from keras import regularizers, optimizers
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Activation, Flatten, Dropout, BatchNormalization
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras import regularizers, optimizers
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from keras.callbacks import EarlyStopping, ModelCheckpoint
 import os
 import sys
 
@@ -37,8 +38,8 @@ def CNN_model(filters, depth):
     model.add(Dense(256, activation="relu")) # Dense layers upon individual change!
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
-    model.add(Dense(9, activation='softmax'))
-    model.compile(optimizers.Adam(lr=0.0001, decay=1e-6), loss="categorical_crossentropy", metrics=["accuracy"])
+    model.add(Dense(6, activation='softmax'))
+    model.compile(optimizers.Adam(lr=0.0001), loss="categorical_crossentropy", metrics=["accuracy"])
     model.summary()
 
     return model
@@ -50,7 +51,7 @@ def CNN_model(filters, depth):
 
 def data_preprocessing():
 
-    df = pd.read_csv('../../data_library/preprocessing_data/url_data_CNN1000.csv')
+    df = pd.read_csv('../../data_library/preprocessing_data/url_data_CNN.csv')
 
     columns = ["Year", "ID", "Artist", "Title", "URL"]
     df.columns = columns
@@ -100,7 +101,9 @@ def data_preprocessing():
             df_new["Year"] = df_new["Year"].astype(str)
             df_new.at[x, "Year"] = "millenial"
 
+    pd.get_dummies(df['country'], prefix='country')
     datagen=ImageDataGenerator(rescale=1./255., validation_split=0.25)
+
 
     train_generator=datagen.flow_from_dataframe(
         dataframe=df_new,
@@ -108,7 +111,7 @@ def data_preprocessing():
         x_col="Specs",
         y_col="Year",
         subset="training",
-        batch_size=30,
+        batch_size=20,
         seed=42,
         shuffle=True,
         class_mode="categorical",
@@ -120,7 +123,7 @@ def data_preprocessing():
         x_col="Specs",
         y_col="Year",
         subset="validation",
-        batch_size=30,
+        batch_size=20,
         seed=42,
         shuffle=True,
         class_mode="categorical",
@@ -133,39 +136,42 @@ if __name__ == "__main__":
 
     print("\n INITIALIZE TRAINING")
 
-    df = pd.DataFrame(index=["0 Conv2D", "1 Conv2D", "2 Con2D", "3 Conv2D"], columns=["32 Filters", "64 Filters"])
-    for i in range(5, 7):
-        filters = 2**i
-        train_generator, valid_generator = data_preprocessing()
+    with tf.device("/cpu:0"):
+        df = pd.DataFrame(index=["2 Conv2D", "3 Conv2D"], columns=["32 Filters", "64 Filters", "128 Filters"])
+        for i in range(5, 8):
+            filters = 2**i
+            train_generator, valid_generator = data_preprocessing()
 
-        for depth in range(4):
-            scores = []
-            losses = []
-            model = CNN_model(filters, depth)
+            for depth in range(2, 4):
+                scores = []
+                losses = []
+                model = CNN_model(filters, depth)
 
-            #Fitting keras model, no test gen for now
-            STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
-            STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
+                #Fitting keras model, no test gen for now
+                STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
+                STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
+                #STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
+                es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10)
+                mc = ModelCheckpoint(get_model_name(), monitor='val_accuracy', mode='max', verbose=0, save_best_only=True)
+                callbacks = [es, mc]
 
-            es = EarlyStopping(monitor='loss', mode='min', verbose=1, patience=10)
-            mc = ModelCheckpoint(get_model_name(), monitor='accuracy', mode='max', verbose=0, save_best_only=True)
-            callbacks = [es, mc]
-            #STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
-            model.fit_generator(generator=train_generator,
-                                steps_per_epoch=STEP_SIZE_TRAIN,
-                                validation_data=valid_generator,
-                                validation_steps=STEP_SIZE_VALID,
-                                epochs=150,
-                                callbacks=callbacks
-            )
+                with tf.device("/gpu:0"):
+                    model.fit_generator(generator=train_generator,
+                                        steps_per_epoch=STEP_SIZE_TRAIN,
+                                        validation_data=valid_generator,
+                                        validation_steps=STEP_SIZE_VALID,
+                                        epochs=200,
+                                        callbacks=callbacks
+                    )
 
-            score = model.evaluate_generator(generator=valid_generator, steps=STEP_SIZE_VALID
-            )
-            score = np.array(score)
-            print("EVALUATION - %s: %.2f%%, loss:" % (model.metrics_names[1], score[1] * 100), score[0])
 
-            row = "{} Conv2D".format(depth)
-            column = "{} Filters".format(filters)
-            df.loc[row, column] = score
+                score = model.evaluate_generator(generator=valid_generator, steps=STEP_SIZE_VALID
+                )
+                score = np.array(score)
+                print("EVALUATION - %s: %.2f%%, loss:" % (model.metrics_names[1], score[1] * 100), score[0])
 
-        df.to_csv("../../NN_eval/CNN_eval_librosa_audiofeatures.csv")
+                row = "{} Conv2D".format(depth)
+                column = "{} Filters".format(filters)
+                df.loc[row, column] = score
+
+            df.to_csv("../../NN_eval/CNN_eval_librosa_audiofeatures4.csv")

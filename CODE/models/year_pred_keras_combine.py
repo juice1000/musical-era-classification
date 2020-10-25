@@ -96,9 +96,9 @@ def data_preprocessing(filename):
             training_labels[x] = 1
         elif int(training_labels[x]) < 1980 and int(training_labels[x]) >= 1970:
             training_labels[x] = 2
-        elif int(training_labels[x]) < 1990 and int(training_labels[x]) >= 1930:
+        elif int(training_labels[x]) < 1990 and int(training_labels[x]) >= 1980:
             training_labels[x] = 3
-        elif int(training_labels[x]) < 2000 and int(training_labels[x]) >= 1930:
+        elif int(training_labels[x]) < 2000 and int(training_labels[x]) >= 1990:
             training_labels[x] = 4
         else:
             training_labels[x] = 8
