@@ -10,8 +10,8 @@ import time
 def authorization():
     token = util.prompt_for_user_token(username,
                                        scope,
-                                       client_id='54372e1b817d4af19982352a52541a48',
-                                       client_secret='ef3cdce4889e4a55aff19bebbdaa5c24',
+                                       client_id='your spotify developer client id',
+                                       client_secret='your spotify developer client secret',
                                        redirect_uri='http://localhost:9090')
     auth = "Authorization: Bearer %s" % token
     return auth
